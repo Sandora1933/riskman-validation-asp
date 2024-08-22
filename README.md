@@ -1,7 +1,7 @@
 # riskman-validation-asp
 Single ASP Program incorporating riskman ontology along with SHACL constraints.
 
-This version includes a single program riskman-asp.lp which incorporates actual riskman ontology with SHACL constraints. Additionally 2 files test1.lp and test2.lp are provided as test cases, representing data. These files are sets of ASP facts obtained by translation from RDF ABoxes.
+This version includes a single program riskman-asp.lp which incorporates actual riskman ontology with SHACL constraints. Additionally files test0.lp, test1.lp and test2.lp are provided as test cases, representing data. These files are sets of ASP facts obtained by translation from RDF ABoxes.
 
 ## Setup
 ### Prerequisites
