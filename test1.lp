@@ -204,7 +204,7 @@ hasSafetyAssurance(sda99, safetyAssurance99).
 % ex:sda991 a riskman:SDA ; (label: Indicate low battery level) 
 sda(sda991).
 %% Here is missing ImplManifest!
-% hasImplementationManifest(sda991, implementationManifest991).
+%hasImplementationManifest(sda991, implementationManifest991).
 hasSafetyAssurance(sda991, safetyAssurance991).
 
 % ex:sda992 a riskman:SDA ; (label: Indicate low battery level)
