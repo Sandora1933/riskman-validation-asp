@@ -25,25 +25,21 @@ c:/Users/vlad/.vscode/extensions/.../clingo_win.exe "c:/.../riskman/riskman-asp.
 Output:
 ```
 clingo version 5.4.0
-Reading from ...vlad8/VSCode Projects/riskman/test1.lp ...
-Solving...
-UNSATISFIABLE
+Reading from ...VSCode Projects\riskman\riskman-asp.lp ...
 
-Models       : 0
+Solving...
+Answer: 1
+constraint_violated("Every SDA needs a final mitigation (which has the Implementation Manifest)",sda991)
+SATISFIABLE
+
+Models       : 1
 Calls        : 1
-Time         : 0.013s (Solving: 0.00s 1st Model: 0.00s Unsat: 0.00s)
+Time         : 0.017s (Solving: 0.00s 1st Model: 0.00s Unsat: 0.00s)
 CPU Time     : 0.000s
 ```
 ### Results Overview
-&emsp;&emsp;Both tests show UNSATISFIABLE result matching the same results as from riskman-validation-pipeline (test-cases 1 and 2).
-For instance, for test-case1 we have a violation of the constraint that every sda should have an implementation manifest. 
-We can uncomment hasImplementationManifest property in test1.lp to get a successful model. See
-```
-% ex:sda991 a riskman:SDA ; (label: Indicate low battery level) 
-sda(sda991).
-%% Here is missing ImplManifest!
-% hasImplementationManifest(sda991, implementationManifest991). (uncomment here)
-hasSafetyAssurance(sda991, safetyAssurance991).
-```
+&emsp;&emsp;Both tests show SATISFIABLE result and provide a set of violated constraints as an output matching the same results as 
+from riskman-validation-pipeline (test-cases 0 and 1).
+For instance, for test-case test1.lp we have a violation of the constraint that every sda should have an implementation manifest. 
 
 
