@@ -108,15 +108,27 @@ assuranceSDAI(X) :- sdaI(X), assuranceSDA(X).
 controlledRisk(X) :- hasAnalyzedRisk(X,_), hasResidualRiskLevel(X,_),
     isMitigatedBy(X,_).
 
+% (5)
+domainSpecificHazard(X) :- causesHarm(X,_).
+
 % (6)
 domainSpecificHazard(X) :- hasDeviceComponent(X,_), hasDeviceFunction(X,_),
     hasHazard(X,_).
+
+% (7)
+hazardousSituation(X) :- hasEvent(X,_). 
 
 % (8)
 risk(X) :- hasHarm(X,_), hasRiskLevel(X,_).
 
 % (9)
 riskLevel(X) :- hasProbability(X,_), hasSeverity(X,_).
+
+% (10)
+sda(X) :- riskSDA(X).
+
+% (11)
+riskSDAI(X) :- riskSDA(X), sdaI(X).
 
 % (12)
 sdaI(X) :- sda(X), hasImplementationManifest(X,_).
@@ -145,29 +157,29 @@ hasPrecedingEvent(X, Z) :- hasPrecedingEvent(X, Y), hasPrecedingEvent(Y, Z).
 % % % SHACL constraints % % % 
 
 %:AnalyzedRiskShape (17)
-:- analyzedRisk(X), #count { Y : hasDomainSpecificHazard(X, Y) } != 1.
-:- analyzedRisk(X), #count { Y : hasHarm(X, Y) } != 1.
-:- analyzedRisk(X), #count { Y : hasDeviceContext(X, Y) } != 1.
-:- analyzedRisk(X), #count { Y : hasHazardousSituation(X, Y) } != 1.
-:- analyzedRisk(X), #count { Y : hasInitialRiskLevel(X, Y) } != 1.
+constraint_violated("Every analyzed risk must have exactly one domain specific hazard.", X) :- analyzedRisk(X), #count { Y : hasDomainSpecificHazard(X, Y) } != 1.
+constraint_violated("Every analyzed risk must have exactly one harm.", X) :- analyzedRisk(X), #count { Y : hasHarm(X, Y) } != 1.
+constraint_violated("Every analyzed risk must have exactly one device context.", X) :- analyzedRisk(X), #count { Y : hasDeviceContext(X, Y) } != 1.
+constraint_violated("Every analyzed risk must have exactly one hazardous situation.", X) :- analyzedRisk(X), #count { Y : hasHazardousSituation(X, Y) } != 1.
+constraint_violated("Every analyzed risk must have exactly one pre-risk level.", X) :- analyzedRisk(X), #count { Y : hasInitialRiskLevel(X, Y) } != 1.
 
-%:AssuranceSDAShape (18)
-:- assuranceSDA(X), hasSubSDA(X, Y), not assuranceSDA(Y).
-:- assuranceSDA(X), #count { Y : hasSafetyAssurance(X, Y) } != 1.
+%:AssuranceSDAShape (18) 
+constraint_violated("SubSDAs of an AssuranceSDA must again be AssuranceSDAs.", X) :- assuranceSDA(X), hasSubSDA(X, Y), not assuranceSDA(Y).
+constraint_violated("SubSDAs of an AssuranceSDA must again be AssuranceSDAs.", X) :- assuranceSDA(X), #count { Y : hasSafetyAssurance(X, Y) } != 1.
 
 %:ControlledRiskShape (19)
-:- controlledRisk(X), #count { Y : isMitigatedBy(X, Y) } != 1.
-:- controlledRisk(X), #count { Y : hasAnalyzedRisk(X, Y) } != 1.
-:- controlledRisk(X), #count { Y : hasResidualRiskLevel(X, Y) } != 1.
+constraint_violated("Every controlled risk must be mitigated by an SDA.", X) :- controlledRisk(X), #count { Y : isMitigatedBy(X, Y) } != 1.
+constraint_violated("Every controlled risk must have exactly one analyzed risk.", X) :- controlledRisk(X), #count { Y : hasAnalyzedRisk(X, Y) } != 1.
+constraint_violated("Every controlled risk must have exactly one residual risk level", X) :- controlledRisk(X), #count { Y : hasResidualRiskLevel(X, Y) } != 1.
 
 %:DomainSpecificHazardShape (21)
-:- domainSpecificHazard(X), #count { Y : hasDeviceComponent(X, Y) } != 1.
-:- domainSpecificHazard(X), #count { Y : hasDeviceFunction(X, Y) } != 1.
-:- domainSpecificHazard(X), #count { Y : hasHazard(X, Y) } != 1.
+constraint_violated("Domain specific hazard must have exactly one device component", X) :- domainSpecificHazard(X), #count { Y : hasDeviceComponent(X, Y) } != 1.
+constraint_violated("Domain specific hazard must have exactly one device function", X) :- domainSpecificHazard(X), #count { Y : hasDeviceFunction(X, Y) } != 1.
+constraint_violated("Domain specific hazard must have exactly one hazard", X) :- domainSpecificHazard(X), #count { Y : hasHazard(X, Y) } != 1.
 
 % :RiskLevelShape (22)
-:- riskLevel(X), #count { Y : hasProbability(X, Y) } != 1.
-:- riskLevel(X), #count { Y : hasSeverity(X, Y) } != 1.
+constraint_violated("Risk level must have exactly one probability value. In case of specifying all 3 probabilities (P, P1 and P2) check if P=P1xP2.", X) :- riskLevel(X), #count { Y : hasProbability(X, Y) } != 1.
+constraint_violated("Risk level must have exactly one severity value.", X) :- riskLevel(X), #count { Y : hasSeverity(X, Y) } != 1.
 
 %:SDAShape (23)
 % Recursive rule to find all paths through hasSubSDA
@@ -179,7 +191,7 @@ reachable(X, X) :- sda(X), sdaI(X).
 sdaIReachable(X) :- sda(X), reachable(X, Y), sdaI(Y).
 
 % Every SDA needs a final mitigation (SDAI)
-:- sda(X), not sdaIReachable(X).
+constraint_violated("Every SDA needs a final mitigation (which has the Implementation Manifest)", X) :- sda(X), not sdaIReachable(X).
 
 %:NonIncreasingProbabilityShape a sh:NodeShape; (20-1)
 % Extract initial probability
@@ -189,7 +201,7 @@ initialProbability(CR, P) :- controlledRisk(CR), hasAnalyzedRisk(CR, AR), hasIni
 residualProbability(CR, RP) :- controlledRisk(CR), hasResidualRiskLevel(CR, RL), hasProbability(RL, RP).
 
 % Residual probability should not be higher than initial probability
-:- initialProbability(CR, IP), residualProbability(CR, RP), gt(RP, IP).
+constraint_violated("Residual probability should not be higher than initial probability.", CR) :- initialProbability(CR, IP), residualProbability(CR, RP), gt(RP, IP).
 
 %:NonIncreasingProbability1Shape a sh:NodeShape; (20-2)
 % Extract initial probability 1
@@ -199,7 +211,7 @@ initialProbability1(CR, P1) :- controlledRisk(CR), hasAnalyzedRisk(CR, AR), hasI
 residualProbability1(CR, RP1) :- controlledRisk(CR), hasResidualRiskLevel(CR, RL), hasProbability1(RL, RP1).
 
 % Residual probability 1 should not be higher than initial probability 1
-:- initialProbability1(CR, IP1), residualProbability1(CR, RP1), gt(RP1, IP1).
+constraint_violated("Residual probability 1 should not be higher than initial probability 1.", CR) :- initialProbability1(CR, IP1), residualProbability1(CR, RP1), gt(RP1, IP1).
 
 %:NonIncreasingProbability2Shape a sh:NodeShape; (20-3)
 % Extract initial probability 2
@@ -209,7 +221,7 @@ initialProbability2(CR, P2) :- controlledRisk(CR), hasAnalyzedRisk(CR, AR), hasI
 residualProbability2(CR, RP2) :- controlledRisk(CR), hasResidualRiskLevel(CR, RL), hasProbability2(RL, RP2).
 
 % Residual probability 2 should not be higher than initial probability 2
-:- initialProbability2(CR, IP2), residualProbability2(CR, RP2), gt(RP2, IP2).
+constraint_violated("Residual probability 2 should not be higher than initial probability 2.", CR) :- initialProbability2(CR, IP2), residualProbability2(CR, RP2), gt(RP2, IP2).
 
 %:NonIncreasingSeverityShape a sh:NodeShape; (20-4)
 % Extract initial severity
@@ -219,7 +231,12 @@ initialSeverity(CR, S) :- controlledRisk(CR), hasAnalyzedRisk(CR, AR), hasInitia
 residualSeverity(CR, RS) :- controlledRisk(CR), hasResidualRiskLevel(CR, RL), hasSeverity(RL, RS).
 
 % Residual severity should not be higher than initial severity
-:- initialSeverity(CR, IS), residualSeverity(CR, RS), gt(RS, IS).
+constraint_violated("Residual severity should not be higher than initial severity.", CR) :- initialSeverity(CR, IS), residualSeverity(CR, RS), gt(RS, IS).
+
+% % % Output violated constraints % % %
+#show constraint_violated/2.
+
+
 
 
 
